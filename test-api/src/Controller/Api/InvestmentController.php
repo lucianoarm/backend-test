@@ -328,60 +328,68 @@ class InvestmentController extends AbstractController
     #[Route('/owner/{ownerId}', methods: ['POST'])]
     public function listByOwner(int $ownerId, Request $request): JsonResponse
     {
-        $data = json_decode($request->getContent(), true);
-        if ($data === null) {
-            $data = $request->request->all();
+        try {
+            $data = json_decode($request->getContent(), true);
+            if ($data === null) {
+                $data = $request->request->all();
+            }
+
+            $owner = $this->ownerRepository->find($ownerId);
+            if (!$owner) {
+                throw new \InvalidArgumentException('Investidor não encontrado!');
+            }
+
+            $page = empty($data['page']) ? 1 : (int)$data['page'];
+            $limit = empty($data['limit']) ? 100 : (int)$data['limit'];
+            $offset = ($page - 1) * $limit;
+
+            $repo = $this->investmentRepository;
+
+            $total = (int) $repo->createQueryBuilder('i')
+                ->select('COUNT(i.id)')
+                ->andWhere('i.owner = :owner')
+                ->setParameter('owner', $owner)
+                ->getQuery()
+                ->getSingleScalarResult();
+
+            $res = $repo->createQueryBuilder('i')
+                ->andWhere('i.owner = :owner')
+                ->setParameter('owner', $owner)
+                ->setFirstResult($offset)
+                ->setMaxResults($limit)
+                ->orderBy('i.createdAt', 'DESC');
+
+            $investments = $res->getQuery()->getResult();
+
+            $listaInvestments = [];
+            foreach ($investments as $investment) {
+                $balance = $this->investmentService->calculateExpectedBalance($investment);
+                $listaInvestments[] = [
+                    'id' => $investment->getId(),
+                    'createdAt' => $investment->getCreatedAt()->format('Y-m-d'),
+                    'initialValue' => $investment->getInitialValue(),
+                    'redeemed' => $investment->getRedeemedAt() !== null,
+                    'expectedBalance' => $investment->getRedeemedAt() !== null ? $investment->getRedeemedValue() : round($balance, 2),
+                ];
+            }
+
+            return $this->json([
+                "status" => "Success",
+                'ownerId' => $ownerId,
+                'owner' => $owner->getName(),
+                'totalInvestment' => $total,
+                'totalPages' => ceil($total / $limit),
+                'page' => $page,
+                'limit' => $limit,
+                'offset' => $offset,
+                'listaInvestments' => $listaInvestments,
+            ], 200);
+            
+        } catch (\Exception $e) {
+            return $this->json([
+                'status' => 'error',
+                'message' => 'Atenção : ' . $e->getMessage()
+            ], 428);
         }
-
-        $owner = $this->ownerRepository->find($ownerId);
-        if (!$owner) {
-            throw new \InvalidArgumentException('Investidor não encontrado!');
-        }
-
-        $page = empty($data['page']) ? 1 : (int)$data['page'];
-        $limit = empty($data['limit']) ? 100 : (int)$data['limit'];
-        $offset = ($page - 1) * $limit;
-
-        $repo = $this->investmentRepository;
-
-        $total = (int) $repo->createQueryBuilder('i')
-            ->select('COUNT(i.id)')
-            ->andWhere('i.owner = :owner')
-            ->setParameter('owner', $owner)
-            ->getQuery()
-            ->getSingleScalarResult();
-
-        $res = $repo->createQueryBuilder('i')
-            ->andWhere('i.owner = :owner')
-            ->setParameter('owner', $owner)
-            ->setFirstResult($offset)
-            ->setMaxResults($limit)
-            ->orderBy('i.createdAt', 'DESC');
-
-        $investments = $res->getQuery()->getResult();
-
-        $listaInvestments = [];
-        foreach ($investments as $investment) {
-            $balance = $this->investmentService->calculateExpectedBalance($investment);
-            $listaInvestments[] = [
-                'id' => $investment->getId(),
-                'createdAt' => $investment->getCreatedAt()->format('Y-m-d'),
-                'initialValue' => $investment->getInitialValue(),
-                'redeemed' => $investment->getRedeemedAt() !== null,
-                'expectedBalance' => $investment->getRedeemedAt() !== null ? $investment->getRedeemedValue() : round($balance, 2),
-            ];
-        }
-
-        return $this->json([
-            "status" => "Success",
-            'ownerId' => $ownerId,
-            'owner' => $owner->getName(),
-            'totalInvestment' => $total,
-            'totalPages' => ceil($total / $limit),
-            'page' => $page,
-            'limit' => $limit,
-            'offset' => $offset,
-            'listaInvestments' => $listaInvestments,
-        ], 200);
     }
 }
