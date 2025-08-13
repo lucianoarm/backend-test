@@ -11,8 +11,11 @@ class Owner
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column(length: 150)]
+    #[ORM\Column(length: 250)]
     private string $name;
+
+    #[ORM\Column(length: 150)]
+    private string $email;
 
     public function getId(): ?int {
         return $this->id;
@@ -23,6 +26,16 @@ class Owner
     }
 
     public function setName(string $name): self {
-        $this->name = $name; return $this;
+        $this->name = $name;
+        return $this;
+    }
+    
+    public function setEmail(string $email): self {
+        $this->email = $email;
+        return $this;
+    }
+
+    public function getEmail(): string {
+        return $this->email;
     }
 }

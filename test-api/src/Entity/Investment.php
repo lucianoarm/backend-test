@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
@@ -33,20 +32,22 @@ class Investment
         return $this->id; 
     }
 
-    public function getOwner(): Owner { 
+    public function getOwner(): Owner {
         return $this->owner; 
     }
 
-    public function setOwner(Owner $owner): self { 
-        $this->owner = $owner; return $this; 
+    public function setOwner(Owner $owner): self {
+        $this->owner = $owner; 
+        return $this; 
     }
 
     public function getCreatedAt(): DateTimeInterface {
         return $this->createdAt; 
     }
-
-    public function setCreatedAt(DateTimeInterface $createdAt): self { 
-        $this->createdAt = $createdAt; return $this; 
+    
+    public function setCreatedAt(DateTimeInterface $createdAt): self {
+        $this->createdAt = $createdAt;
+        return $this; 
     }
 
     public function getInitialValue(): float {
@@ -54,9 +55,6 @@ class Investment
     }
 
     public function setInitialValue(float $initialValue): self {
-        if ($initialValue < 0) {
-            throw new \InvalidArgumentException("O valor inicial não pode ser negativo.");
-        }
         $this->initialValue = $initialValue;
         return $this;
     }
@@ -65,16 +63,18 @@ class Investment
         return $this->redeemedValue;
     }
 
-    public function setRedeemedValue(?float $redeemedValue): self { 
+    public function setRedeemedValue(?float $redeemedValue): self {
         $this->redeemedValue = $redeemedValue; 
-        return $this; 
+        return $this;
     }
-
-    public function getRedeemedAt(): ?DateTimeInterface { 
+    
+    public function getRedeemedAt(): ?DateTimeInterface {
         return $this->redeemedAt;
     }
     
     public function setRedeemedAt(?DateTimeInterface $redeemedAt): self {
-        $this->redeemedAt = $redeemedAt; return $this;
+        $this->redeemedAt = $redeemedAt;
+        return $this;
     }
+
 }
