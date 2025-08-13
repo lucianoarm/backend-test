@@ -18,3 +18,9 @@ GRANT ALL PRIVILEGES ON `db_test_api`.* TO 'usuario_api'@'localhost';
 
 -- Aplica mudanças
 FLUSH PRIVILEGES;
+
+# Instruções especiais para copilação
+
+# Bibliotecar de terceiros Utilizadas (Porque utilizou e como foram usadas)
+
+# Link Para a documentaçãoda API ()
