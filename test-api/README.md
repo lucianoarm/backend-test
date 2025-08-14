@@ -22,7 +22,7 @@ Utiliza **Doctrine ORM** para persistência de dados e **NelmioApiDocBundle** pa
 | **doctrine/doctrine-migrations-bundle** | 3.4.2  | Permite criar e rodar migrations para atualizar o schema do banco.                               |
 | **doctrine/orm**                        | 3.5.2  | Mapeia entidades PHP para tabelas no banco de dados.                                             |
 | **nelmio/api-doc-bundle**               | 5.5.0  | Gera documentação interativa dos endpoints usando Swagger UI.                                    |
-| 
+| **symfony/mailer**                      | 7.3.x  | Envio de emails a partir da aplicação, usado no serviço de notificação.                          |
 ---
 
 ## Configuração e Compilação
@@ -48,6 +48,10 @@ Utiliza **Doctrine ORM** para persistência de dados e **NelmioApiDocBundle** pa
 > DATABASE_URL="mysql://usuario:senha@127.0.0.1:3306/investimentos"
 > APP_ENV=dev
 > APP_SECRET=algumasecret
+
+> **symfony/mailer**
+> MAILER_DSN=smtp://seu_usuario:sua_senha@smtp.gmail.com:587
+> EMAIL_TO=email_destino_aviso@gmail.com
 
 ### Criar banco de dados e aplicar migrations
 

@@ -7,6 +7,7 @@ use App\Entity\Owner;
 use App\Repository\InvestmentRepository;
 use App\Repository\OwnerRepository;
 use App\Service\InvestmentService;
+use App\Service\EmailService;
 use DateTime;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -21,6 +22,7 @@ class InvestmentController extends AbstractController
 {
     public function __construct(
         private InvestmentService $investmentService,
+        private EmailService $emailService,
         private ManagerRegistry $doctrine,
         private OwnerRepository $ownerRepository,
         private InvestmentRepository $investmentRepository,
@@ -51,6 +53,16 @@ class InvestmentController extends AbstractController
     )]
     public function index(Request $request): JsonResponse
     {
+        $this->emailService->sendEmail(
+            $_ENV['EMAIL_TO'],
+            'API de Investimentos',
+            [
+                'subject' => 'API de Investimentos - Api/Investments',
+                'name' => 'Administrador',
+                'message' => 'O endpoint de "investimentos está online" foi consultado.'
+            ]
+        );
+        
         return $this->json([
             "status" => "Online",
             "url_doc" => $request->getSchemeAndHttpHost() . $request->getBasePath() . "/api/doc",
@@ -127,6 +139,16 @@ class InvestmentController extends AbstractController
             $em = $this->doctrine->getManager();
             $em->persist($owner);
             $em->flush();
+
+            $this->emailService->sendEmail(
+                $_ENV['EMAIL_TO'],
+                'API de Investimentos',
+                [
+                    'subject' => 'API de Investimentos - Api/NewOwner',
+                    'name' => 'Administrador',
+                    'message' => 'O endpoint de "Criação de Novo Proprietário" foi executado.'
+                ]
+            );
             
             return $this->json([
                 "status" => "Success",
@@ -231,6 +253,16 @@ class InvestmentController extends AbstractController
             $em = $this->doctrine->getManager();
             $em->persist($investment);
             $em->flush();
+
+            $this->emailService->sendEmail(
+                $_ENV['EMAIL_TO'],
+                'API de Investimentos',
+                [
+                    'subject' => 'API de Investimentos - Api/Create',
+                    'name' => 'Administrador',
+                    'message' => 'O endpoint de "Criação de Novo Investimento" foi executado.'
+                ]
+            );
             
             return $this->json([
                 "status" => "Success",
@@ -349,6 +381,16 @@ class InvestmentController extends AbstractController
 
             $investment->setRedeemedAt($date);
 
+            $this->emailService->sendEmail(
+                $_ENV['EMAIL_TO'],
+                'API de Investimentos',
+                [
+                    'subject' => 'API de Investimentos - Api/Show',
+                    'name' => 'Administrador',
+                    'message' => 'O endpoint de "Exibição de Investimento" foi executado.'
+                ]
+            );
+
             return $this->json([
                 'status' => 'Success',
                 'investment' => $investment->getId(),
@@ -442,15 +484,28 @@ class InvestmentController extends AbstractController
     public function redeem(int $id, Request $request): JsonResponse
     {
         try {
+            $data = json_decode($request->getContent(), true) ?: $request->request->all();
+
+            if (empty($id) || $id <= 0) {
+                throw new \InvalidArgumentException('Id inválido!');
+            }
+
             $investment = $this->investmentRepository->find($id);
             if (!$investment || $investment->getRedeemedAt() !== null) {
                 throw new \InvalidArgumentException('Investimento inválido ou já resgatado');
             }
 
-            $data = json_decode($request->getContent(), true) ?: $request->request->all();
-            if (!isset($data['redeemDate'])) {
+            if (!isset($data['redeemDate']) || empty($data['redeemDate'])) {
                 throw new \InvalidArgumentException('Data de resgate obrigatória');
             }
+            
+
+            $date = DateTime::createFromFormat('Y-m-d', $data['redeemDate']);
+            if (!$date || $date > new DateTime('now') || $date < $investment->getCreatedAt()) {
+                throw new \InvalidArgumentException('Data inválida!');
+            }
+
+            $result = $this->investmentService->redeemInvestment($investment, $date);
 
             $date = DateTime::createFromFormat('Y-m-d', $data['redeemDate']);
             $result = $this->investmentService->redeemInvestment($investment, $date);
@@ -461,6 +516,16 @@ class InvestmentController extends AbstractController
             $em = $this->doctrine->getManager();
             $em->persist($investment);
             $em->flush();
+
+            $this->emailService->sendEmail(
+                $_ENV['EMAIL_TO'],
+                'API de Investimentos',
+                [
+                    'subject' => 'API de Investimentos - Api/Redeem',
+                    'name' => 'Administrador',
+                    'message' => 'O endpoint de "Resgate de Investimento" foi executado.'
+                ]
+            );
             
             return $this->json([
                 'status' => 'Success',
@@ -626,6 +691,16 @@ class InvestmentController extends AbstractController
                     'expectedBalance' => $investment->getRedeemedAt() !== null ? $investment->getRedeemedValue() : round($balance, 2),
                 ];
             }
+
+            $this->emailService->sendEmail(
+                $_ENV['EMAIL_TO'],
+                'API de Investimentos',
+                [
+                    'subject' => 'API de Investimentos - Api/Owner',
+                    'name' => 'Administrador',
+                    'message' => 'O endpoint de "Visualização de Investimento de um Investidor" foi executado.'
+                ]
+            );
 
             return $this->json([
                 "status" => "Success",
