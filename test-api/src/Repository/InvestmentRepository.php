@@ -1,0 +1,22 @@
+<?php
+namespace App\Repository;
+
+use App\Entity\Investment;
+use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\Persistence\ManagerRegistry;
+
+/**
+ * @extends ServiceEntityRepository<Investment>
+ *
+ * @method Investment|null find($id, $lockMode = null, $lockVersion = null)
+ * @method Investment|null findOneBy(array $criteria, array $orderBy = null)
+ * @method Investment[]    findAll()
+ * @method Investment[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
+ */
+class InvestmentRepository extends ServiceEntityRepository
+{
+    public function __construct(ManagerRegistry $registry)
+    {
+        parent::__construct($registry, Investment::class);
+    }
+}
